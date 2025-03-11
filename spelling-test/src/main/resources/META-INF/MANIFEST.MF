@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Main-Class: com.timelordtty.spelling.SpellCorrect
+Class-Path: .
+Multi-Release: true
+Created-By: TimelordTTY
+Implementation-Title: Spelling Test Tool
+Implementation-Version: 1.0.0
+Implementation-Vendor: com.timelordtty
+Add-Opens: java.base/java.lang java.base/java.io java.base/java.util java.base/java.util.concurrent java.rmi/sun.rmi.transport
+Add-Modules: javafx.controls,javafx.fxml,javafx.base,javafx.graphics 

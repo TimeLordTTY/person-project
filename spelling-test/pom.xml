@@ -4,21 +4,57 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>com.timelordtty</groupId>
+        <artifactId>person-project</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
     <artifactId>spelling-test</artifactId>
-    <groupId>com.timelordtty</groupId>
     <version>1.0.0</version>
+    
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+        </pluginRepository>
+    </pluginRepositories>
+    
     <dependencies>
+        <!-- JavaFX依赖 -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>17</version>
         </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+        </dependency>
+        
+        <!-- HTTP客户端 -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>4.9.3</version>
         </dependency>
+        
+        <!-- Spring Boot依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -32,42 +68,176 @@
                     <groupId>org.apache.logging.log4j</groupId>
                 </exclusion>
             </exclusions>
-            <version>2.7.18</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>2.7.18</version>
+        </dependency>
+        
+        <!-- 日志依赖 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        
+        <!-- Jackson依赖 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-            <version>1.18.28</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        
+        <!-- 平台特定的JavaFX依赖 -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <classifier>win</classifier>
         </dependency>
     </dependencies>
 
     <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
-            <!-- 打包包含依赖的JAR -->
+            <!-- Maven编译器插件配置 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            
+            <!-- 检测JDK版本 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <message>*** 当前JDK版本为 ${java.version} - 需要使用JDK 17及以上版本! ***</message>
+                                    <version>[17,)</version>
+                                </requireJavaVersion>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- JavaFX Maven 插件 -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+            </plugin>
+            
+            <!-- Shade插件，确保所有依赖都打包到单个JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
                 <executions>
                     <execution>
+                        <id>create-fat-jar</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <finalName>${project.artifactId}-${project.version}-all</finalName>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.timelordtty.spelling.SpellCorrect</mainClass>
+                                    <manifestEntries>
+                                        <Add-Opens>java.base/java.lang java.base/java.io java.base/java.util java.base/java.util.concurrent java.rmi/sun.rmi.transport</Add-Opens>
+                                        <Multi-Release>true</Multi-Release>
+                                        <Main-Class>com.timelordtty.spelling.SpellCorrect</Main-Class>
+                                        <Implementation-Title>${project.artifactId}</Implementation-Title>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
+                                        <Implementation-Vendor-Id>com.timelordtty</Implementation-Vendor-Id>
+                                        <Built-By>TimelordTTY</Built-By>
+                                    </manifestEntries>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/spring.handlers</resource>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/spring.schemas</resource>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/spring.factories</resource>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <version>${spring-boot.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            
+            <!-- Spring Boot Maven 插件 - 设置为跳过执行，避免生成额外的JAR -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <phase>none</phase>
                     </execution>
                 </executions>
             </plugin>
+            
             <!-- 生成EXE -->
             <plugin>
                 <groupId>com.akathist.maven.plugins.launch4j</groupId>
                 <artifactId>launch4j-maven-plugin</artifactId>
-                <version>2.5.2</version>
                 <executions>
                     <execution>
                         <id>l4j-clui</id>
@@ -76,19 +246,212 @@
                             <goal>launch4j</goal>
                         </goals>
                         <configuration>
-                            <headerType>console</headerType>
+                            <headerType>gui</headerType>
                             <outfile>target/SpellCheckTool.exe</outfile>
-                            <jar>target/${project.artifactId}-${project.version}.jar</jar>
-                            <errTitle>SpellCheckTool Error</errTitle>
+                            <jar>target/${project.artifactId}-${project.version}-all.jar</jar>
+                            <dontWrapJar>false</dontWrapJar>
+                            <errTitle>拼写检查工具错误</errTitle>
+                            <downloadUrl>https://java.com/download</downloadUrl>
+                            <supportUrl>https://github.com/timelordtty/spelling-test</supportUrl>
+                            <stayAlive>false</stayAlive>
+                            <restartOnCrash>false</restartOnCrash>
+                            <customProcName>true</customProcName>
+                            <singleInstance>
+                                <mutexName>SpellCheckToolMutex</mutexName>
+                                <windowTitle>拼写检查工具</windowTitle>
+                            </singleInstance>
                             <classPath>
                                 <mainClass>com.timelordtty.spelling.SpellCorrect</mainClass>
+                                <addDependencies>false</addDependencies>
                             </classPath>
-                            <!-- 其他配置 -->
+                            <jre>
+                                <path>jre</path>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                                <bundledJreAsFallback>false</bundledJreAsFallback>
+                                <minVersion>17</minVersion>
+                                <jdkPreference>preferJre</jdkPreference>
+                                <runtimeBits>64</runtimeBits>
+                                <initialHeapSize>256</initialHeapSize>
+                                <maxHeapSize>1024</maxHeapSize>
+                                <opts>
+                                    <opt>-Djava.library.path=./</opt>
+                                    <opt>-Dfile.encoding=UTF-8</opt>
+                                    <opt>--enable-preview</opt>
+                                    <opt>-Dspring.output.ansi.enabled=ALWAYS</opt>
+                                    <opt>-Dbaidu.api.key=CsdvxQbBbwYREpS2iy7cukmr</opt>
+                                    <opt>-Dbaidu.api.secret=VzfeFhNb4DzVxXWKW2J2aMJM7uHgeUpg</opt>
+                                    <opt>-Dlogback.configurationFile=logback-exe.xml</opt>
+                                    <opt>--module-path=./jre/lib/javafx-modules</opt>
+                                    <opt>--add-modules=javafx.controls,javafx.fxml,javafx.base,javafx.graphics</opt>
+                                    <opt>--add-opens=java.base/java.lang=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.base/java.io=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.base/java.util=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.base/java.util.concurrent=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED</opt>
+                                </opts>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>${project.version}</txtFileVersion>
+                                <fileDescription>拼写检查工具</fileDescription>
+                                <copyright>Copyright © 2024</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>${project.version}</txtProductVersion>
+                                <productName>SpellCheckTool</productName>
+                                <internalName>SpellCheckTool</internalName>
+                                <originalFilename>SpellCheckTool.exe</originalFilename>
+                            </versionInfo>
+                            <messages>
+                                <startupErr>启动过程中出错</startupErr>
+                                <bundledJreErr>找不到捆绑的JRE</bundledJreErr>
+                                <jreVersionErr>需要Java运行环境</jreVersionErr>
+                                <launcherErr>启动器初始化失败</launcherErr>
+                                <instanceAlreadyExistsMsg>程序已经在运行中</instanceAlreadyExistsMsg>
+                            </messages>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- 复制依赖项 - 仅复制JavaFX相关依赖 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/dependency</outputDirectory>
+                            <includeArtifactIds>javafx-controls,javafx-base,javafx-graphics,javafx-fxml</includeArtifactIds>
+                            <includeClassifiers>win</includeClassifiers>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- 只复制必要的配置文件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-config</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <resources>          
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                    <includes>
+                                        <include>config.properties</include>
+                                        <include>logback-exe.xml</include>
+                                        <include>application.properties</include>
+                                    </includes>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>              
+                        </configuration>            
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- 复制JRE -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <!-- 删除旧的jre目录，避免冲突 -->
+                                <delete dir="${project.build.directory}/jre" quiet="true" failonerror="false"/>
+                                
+                                <!-- 完整复制JRE -->
+                                <echo>复制完整JRE环境...</echo>
+                                <copy todir="${project.build.directory}/jre">
+                                    <fileset dir="${jdk.home}">
+                                        <include name="bin/**"/>
+                                        <include name="conf/**"/>
+                                        <include name="lib/**"/>
+                                        <include name="legal/**"/>
+                                        <include name="release"/>
+                                    </fileset>
+                                </copy>
+                                
+                                <!-- 创建JavaFX模块目录 -->
+                                <mkdir dir="${project.build.directory}/jre/lib/javafx-modules"/>
+                                
+                                <!-- 添加JavaFX支持 -->
+                                <echo>复制JavaFX模块...</echo>
+                                <copy todir="${project.build.directory}/jre/lib/javafx-modules" flatten="true" failonerror="false">
+                                    <fileset dir="${project.build.directory}/dependency">
+                                        <include name="**/javafx*.jar"/>
+                                    </fileset>
+                                </copy>
+                                
+                                <!-- 删除不必要的JAR文件 -->
+                                <echo>清理不必要的文件...</echo>
+                                <delete>
+                                    <fileset dir="${project.build.directory}">
+                                        <include name="*.jar"/>
+                                        <exclude name="${project.artifactId}-${project.version}-all.jar"/>
+                                    </fileset>
+                                </delete>
+                                
+                                <!-- 显示成功信息 -->
+                                <echo>JRE已成功打包到target/jre目录</echo>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
+            <!-- 不生成JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>com.timelordtty.spelling.SpellCorrect</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <Built-By>TimelordTTY</Built-By>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Implementation-Title>${project.name}</Implementation-Title>
+                            <Add-Opens>java.base/java.lang java.base/java.io java.base/java.util java.base/java.util.concurrent java.rmi/sun.rmi.transport</Add-Opens>
+                            <Multi-Release>true</Multi-Release>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            
+            <!-- 安装阶段只保留必要的文件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

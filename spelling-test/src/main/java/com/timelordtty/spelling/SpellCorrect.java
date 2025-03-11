@@ -1,253 +1,172 @@
 package com.timelordtty.spelling;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.timelordtty.spelling.controller.SpellCheckController;
+import com.timelordtty.spelling.ui.MainView;
+import com.timelordtty.spelling.utils.JavaFxUtils;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
-import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 
-import java.io.IOException;
+import java.io.File;
 
-@Slf4j
+/**
+ * @author tianyu.tang
+ * @description 应用程序主类，负责启动Spring容器和JavaFX应用程序
+ * 
+ * 这个类承担两个主要职责：
+ * 1. 作为Spring Boot应用的入口点
+ * 2. 作为JavaFX应用的入口点
+ * 
+ * 它负责将这两个框架整合在一起，但不包含具体业务逻辑和UI构建代码。
+ */
+@SpringBootApplication
 public class SpellCorrect extends Application {
-
-    private static final String API_KEY = "CsdvxQbBbwYREpS2iy7cukmr";
-    private static final String SECRET_KEY = "VzfeFhNb4DzVxXWKW2J2aMJM7uHgeUpg";
-    private static final String TOKEN_URL = "https://aip.baidubce.com/oauth/2.0/token";
-    private static final String CORRECTION_API_URL = "https://aip.baidubce.com/rpc/2.0/nlp/v2/text_correction?access_token=";
-
-    private TextArea inputArea;
-    private TextFlow resultFlow;
-    private TextArea correctedArea;  // 新增：显示完整校正后文本
-    private Label statusLabel;
-    private Button checkButton;
-    private OkHttpClient httpClient = new OkHttpClient();
-    private String cachedAccessToken;
-
+    private static final Logger log = LoggerFactory.getLogger(SpellCorrect.class);
+    
+    /**
+     * Spring应用上下文，用于访问Bean和管理生命周期
+     */
+    private static ConfigurableApplicationContext springContext;
+    
+    /**
+     * 主视图组件引用
+     */
+    private MainView mainView;
+    
+    /**
+     * JavaFX应用程序初始化方法
+     * 负责创建和配置Spring上下文
+     */
+    @Override
+    public void init() {
+        try {
+            log.info("初始化Spring上下文");
+            springContext = SpringApplication.run(SpellCorrect.class);
+            log.info("Spring上下文初始化完成");
+        } catch (Exception e) {
+            log.error("初始化Spring上下文失败", e);
+            throw new RuntimeException("初始化Spring上下文失败", e);
+        }
+    }
+    
+    /**
+     * JavaFX应用程序停止方法
+     * 负责清理资源和关闭Spring上下文
+     */
+    @Override
+    public void stop() throws Exception {
+        log.info("正在关闭应用...");
+        
+        // 关闭控制器资源
+        try {
+            if (springContext != null) {
+                SpellCheckController controller = springContext.getBean(SpellCheckController.class);
+                controller.shutdown();
+            }
+        } catch (Exception e) {
+            log.warn("关闭控制器资源失败", e);
+        }
+        
+        // 关闭Spring上下文
+        if (springContext != null) {
+            springContext.close();
+            log.info("Spring上下文已关闭");
+        }
+        
+        super.stop();
+    }
+    
+    /**
+     * JavaFX应用程序启动方法
+     * 负责创建UI并显示主窗口
+     */
     @Override
     public void start(Stage primaryStage) {
-        initializeToken();
-        buildUI(primaryStage);
-    }
-
-    /**
-     * 初始化Token：在应用启动时获取一次Token
-     */
-    private void initializeToken() {
-        new Thread(() -> {
-            try {
-                cachedAccessToken = getBaiduToken();
-                Platform.runLater(() -> {
-                    statusLabel.setText("Token初始化成功");
-                    checkButton.setDisable(false);
-                });
-            } catch (IOException e) {
-                Platform.runLater(() -> statusLabel.setText("Token初始化失败: " + e.getMessage()));
-            }
-        }).start();
-    }
-
-    private void buildUI(Stage stage) {
-        VBox root = new VBox(10);
-        root.setPadding(new Insets(10));
-
-        inputArea = new TextArea();
-        inputArea.setPrefSize(800, 400);
-        inputArea.setPromptText("请在此粘贴或输入文章...");
-
-        // 用于展示错误提示的区域
-        resultFlow = new TextFlow();
-        resultFlow.setPrefSize(800, 200);
-        resultFlow.setPadding(new Insets(10));
-        ScrollPane resultScroll = new ScrollPane(resultFlow);
-        resultScroll.setFitToWidth(true);
-
-        // 新增：用于展示校正后的完整文本的文本框
-        correctedArea = new TextArea();
-        correctedArea.setPrefSize(800, 150);
-        correctedArea.setEditable(false);
-        correctedArea.setWrapText(true);
-
-        statusLabel = new Label("就绪");
-        checkButton = new Button("校验文本");
-        checkButton.setDisable(true);
-        checkButton.setOnAction(e -> startCheckProcess());
-
-        root.getChildren().addAll(
-                new Label("输入文本："),
-                inputArea,
-                checkButton,
-                new Label("错误提示："),
-                resultScroll,
-                new Label("校正后文本："),
-                correctedArea,
-                statusLabel
-        );
-
-        Scene scene = new Scene(root, 850, 750);
-        stage.setTitle("中文错别字检测工具");
-        stage.setScene(scene);
-        stage.show();
-    }
-
-    /**
-     * 用户点击“校验文本”按钮后调用此方法，异步进行校验。
-     */
-    private void startCheckProcess() {
-        String text = inputArea.getText().trim();
-        if (text.isEmpty()) {
-            statusLabel.setText("请输入待校验文本");
-            return;
-        }
-        checkButton.setDisable(true);
-        statusLabel.setText("校验中...");
-        new Thread(() -> {
-            try {
-                processText(text);
-            } catch (IOException e) {
-                Platform.runLater(() -> statusLabel.setText("校验失败: " + e.getMessage()));
-            } finally {
-                Platform.runLater(() -> checkButton.setDisable(false));
-            }
-        }).start();
-    }
-
-    /**
-     * 调用百度API进行文本校正。
-     */
-    private void processText(String text) throws IOException {
-        String apiUrl = CORRECTION_API_URL + cachedAccessToken;
-        MediaType mediaType = MediaType.parse("application/json");
-        RequestBody body = RequestBody.create(
-                mediaType,
-                String.format("{\"text\":\"%s\"}", text)
-        );
-        Request request = new Request.Builder()
-                .url(apiUrl)
-                .post(body)
-                .build();
-        log.info("请求: " + request);
-        httpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Platform.runLater(() -> statusLabel.setText("网络错误: " + e.getMessage()));
-            }
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String json = response.body().string();
-                log.info("响应: " + json);
-                Platform.runLater(() -> updateUI(json));
-            }
-        });
-    }
-
-    /**
-     * 根据百度API返回的JSON更新UI。<br>
-     * 展示错误提示（错误字/词、建议及行列信息），并直接更新校正后文本框内容。
-     */
-    private void updateUI(String json) {
-        resultFlow.getChildren().clear();
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(json);
-            JsonNode itemNode = root.path("item");
-            String originalText = itemNode.path("text").asText();
-            String correctedQuery = itemNode.path("correct_query").asText();
-            int errorNum = itemNode.path("error_num").asInt(0);
-
-            // 更新校正后完整文本
-            correctedArea.setText(correctedQuery);
-
-            // 如果没有错误，则只提示未检测到错误
-            if (errorNum == 0) {
-                resultFlow.getChildren().add(new Text("未检测到错误。"));
-            } else {
-                // 从details中取第一条记录
-                JsonNode details = itemNode.path("details");
-                if (details.isArray() && details.size() > 0) {
-                    JsonNode detail = details.get(0);
-                    JsonNode fragments = detail.path("vec_fragment");
-                    if (fragments.isArray()) {
-                        for (JsonNode fragment : fragments) {
-                            int begin = fragment.path("begin_pos").asInt();
-                            String location = getLineCol(begin, originalText);
-                            String oriFrag = fragment.path("ori_frag").asText();
-                            String correctFrag = fragment.path("correct_frag").asText();
-                            String info = String.format("错误：%s，建议：%s，位置：%s", oriFrag, correctFrag, location);
-                            Text infoText = new Text(info + "\n");
-                            infoText.setFill(Color.DARKBLUE);
-                            resultFlow.getChildren().add(infoText);
-                        }
+            log.info("开始构建UI");
+            
+            // 创建主视图
+            mainView = new MainView();
+            mainView.initialize(primaryStage);
+            
+            // 获取UI组件并初始化控制器
+            if (springContext != null) {
+                SpellCheckController controller = springContext.getBean(SpellCheckController.class);
+                controller.initView(mainView);
+            }
+            
+            // 显示主窗口
+            primaryStage.show();
+            log.info("UI初始化完成");
+            
+        } catch (Exception e) {
+            log.error("启动UI失败", e);
+            Platform.exit();
+        }
+    }
+    
+    /**
+     * 应用程序主入口点
+     * 负责设置环境和启动JavaFX应用
+     */
+    public static void main(String[] args) {
+        try {
+            // 设置控制台编码为UTF-8
+            System.setOut(new java.io.PrintStream(System.out, true, "UTF-8"));
+            System.setProperty("file.encoding", "UTF-8");
+            System.setProperty("sun.jnu.encoding", "UTF-8");
+            
+            // 创建日志目录
+            JavaFxUtils.checkAndCreateLogDir();
+            
+            // 设置日志配置文件位置
+            File logbackFile = JavaFxUtils.findLogbackConfig();
+            if (logbackFile != null) {
+                System.setProperty("logback.configurationFile", logbackFile.getAbsolutePath());
+            }
+            
+            // 一旦日志系统初始化完成，使用日志输出
+            log.info("当前系统编码: {}", System.getProperty("file.encoding"));
+            log.info("当前工作目录: {}", System.getProperty("user.dir"));
+            
+            // 检测当前运行环境
+            boolean isExeEnv = JavaFxUtils.detectRunningEnvironment();
+            log.info("当前运行环境: {}", isExeEnv ? "EXE/JAR" : "IDE/开发");
+            
+            // IDE环境特殊处理 - 尝试加载JavaFX
+            if (!isExeEnv) {
+                try {
+                    log.info("尝试直接从类路径加载JavaFX...");
+                    Class.forName("javafx.application.Application");
+                    log.info("JavaFX可以直接从类路径加载，继续启动...");
+                } catch (ClassNotFoundException e) {
+                    log.warn("找不到JavaFX类，尝试设置模块路径...");
+                    if (!JavaFxUtils.setupJavaFxModulePath()) {
+                        log.error("无法加载JavaFX模块。请确保添加了--module-path参数或将JavaFX依赖添加到类路径中。");
+                        throw new RuntimeException("无法加载JavaFX", e);
                     }
                 }
             }
-            statusLabel.setText("校验完成");
-        } catch (Exception e) {
-            statusLabel.setText("解析错误: " + e.getMessage());
+            
+            // 启动JavaFX应用程序
+            log.info("开始启动JavaFX应用程序...");
+            launch(args);
+        } catch (Throwable e) {
+            log.error("启动失败: {}", e.getMessage(), e);
+            
+            // 详细诊断信息
+            log.error("===== 诊断信息 =====");
+            log.error("Java版本: {}", System.getProperty("java.version"));
+            log.error("工作目录: {}", System.getProperty("user.dir"));
+            log.error("类路径: {}", System.getProperty("java.class.path"));
+            log.error("模块路径: {}", System.getProperty("jdk.module.path", "未设置"));
+            
+            System.exit(1);
         }
-    }
-
-    /**
-     * 根据原文和偏移量计算所在的行号和列号（行、列从1开始）。
-     */
-    private String getLineCol(int offset, String text) {
-        String[] lines = text.split("\n", -1);
-        int cum = 0;
-        for (int i = 0; i < lines.length; i++) {
-            int lineLength = lines[i].length();
-            if (offset <= cum + lineLength) {
-                int col = offset - cum + 1;
-                return "第" + (i + 1) + "行，第" + col + "个字";
-            }
-            cum += lineLength + 1; // 加上换行符
-        }
-        return "未知位置";
-    }
-
-    /**
-     * 获取百度API的Token。如果已有缓存则直接返回。
-     */
-    private String getBaiduToken() throws IOException {
-        if (cachedAccessToken != null && !cachedAccessToken.isEmpty()) {
-            return cachedAccessToken;
-        }
-        HttpUrl url = HttpUrl.parse(TOKEN_URL).newBuilder()
-                .addQueryParameter("client_id", API_KEY)
-                .addQueryParameter("client_secret", SECRET_KEY)
-                .addQueryParameter("grant_type", "client_credentials")
-                .build();
-        Request request = new Request.Builder()
-                .url(url)
-                .post(RequestBody.create("", MediaType.parse("application/json")))
-                .build();
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException("Token请求失败: " + response.code());
-            }
-            byte[] bytes = response.body().bytes();
-            JsonNode root = new ObjectMapper().readTree(bytes);
-            cachedAccessToken = root.path("access_token").asText();
-            if (cachedAccessToken.isEmpty()) {
-                throw new IOException("无效的Token响应");
-            }
-            log.info("获取新Token: {}", cachedAccessToken);
-            return cachedAccessToken;
-        }
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }
