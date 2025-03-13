@@ -13,6 +13,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author tianyu.tang
@@ -115,6 +119,16 @@ public class SpellCorrect extends Application {
      * 负责设置环境和启动JavaFX应用
      */
     public static void main(String[] args) {
+        // 检查是否已设置JavaFX模块路径
+        if (!hasJavaFxModulePath()) {
+            // 尝试自动添加JavaFX模块路径并重启进程
+            boolean restarted = restartWithJavaFxModules(args);
+            if (restarted) {
+                // 如果重启成功，当前进程将退出，不会执行下面的代码
+                return;
+            }
+        }
+        
         try {
             // 设置控制台编码为UTF-8
             System.setOut(new java.io.PrintStream(System.out, true, "UTF-8"));
@@ -131,42 +145,171 @@ public class SpellCorrect extends Application {
             }
             
             // 一旦日志系统初始化完成，使用日志输出
-            log.info("当前系统编码: {}", System.getProperty("file.encoding"));
-            log.info("当前工作目录: {}", System.getProperty("user.dir"));
+            System.out.println("当前系统编码: " + System.getProperty("file.encoding"));
+            System.out.println("当前工作目录: " + System.getProperty("user.dir"));
             
             // 检测当前运行环境
             boolean isExeEnv = JavaFxUtils.detectRunningEnvironment();
-            log.info("当前运行环境: {}", isExeEnv ? "EXE/JAR" : "IDE/开发");
+            System.out.println("当前运行环境: " + (isExeEnv ? "EXE/JAR" : "IDE/开发"));
             
             // IDE环境特殊处理 - 尝试加载JavaFX
             if (!isExeEnv) {
                 try {
-                    log.info("尝试直接从类路径加载JavaFX...");
+                    System.out.println("尝试直接从类路径加载JavaFX...");
                     Class.forName("javafx.application.Application");
-                    log.info("JavaFX可以直接从类路径加载，继续启动...");
+                    System.out.println("JavaFX可以直接从类路径加载，继续启动...");
                 } catch (ClassNotFoundException e) {
-                    log.warn("找不到JavaFX类，尝试设置模块路径...");
+                    System.err.println("警告: 找不到JavaFX类，尝试设置模块路径...");
                     if (!JavaFxUtils.setupJavaFxModulePath()) {
-                        log.error("无法加载JavaFX模块。请确保添加了--module-path参数或将JavaFX依赖添加到类路径中。");
-                        throw new RuntimeException("无法加载JavaFX", e);
+                        System.err.println("无法加载JavaFX模块。请确保添加了--module-path参数或将JavaFX依赖添加到类路径中。");
+                        
+                        // 最后尝试一次重启
+                        boolean restarted = restartWithJavaFxModules(args);
+                        if (!restarted) {
+                            throw new RuntimeException("无法加载JavaFX", e);
+                        }
+                        return;
                     }
                 }
             }
             
             // 启动JavaFX应用程序
-            log.info("开始启动JavaFX应用程序...");
+            System.out.println("开始启动JavaFX应用程序...");
             launch(args);
         } catch (Throwable e) {
-            log.error("启动失败: {}", e.getMessage(), e);
+            System.err.println("启动失败: " + e.getMessage());
+            e.printStackTrace();
             
             // 详细诊断信息
-            log.error("===== 诊断信息 =====");
-            log.error("Java版本: {}", System.getProperty("java.version"));
-            log.error("工作目录: {}", System.getProperty("user.dir"));
-            log.error("类路径: {}", System.getProperty("java.class.path"));
-            log.error("模块路径: {}", System.getProperty("jdk.module.path", "未设置"));
+            System.err.println("\n===== 诊断信息 =====");
+            System.err.println("Java版本: " + System.getProperty("java.version"));
+            System.err.println("工作目录: " + System.getProperty("user.dir"));
+            System.err.println("类路径: " + System.getProperty("java.class.path"));
+            System.err.println("模块路径: " + System.getProperty("jdk.module.path", "未设置"));
             
             System.exit(1);
+        }
+    }
+    
+    /**
+     * 检查是否已设置JavaFX模块路径
+     */
+    private static boolean hasJavaFxModulePath() {
+        // 检查命令行或系统属性中是否有模块路径设置
+        String jdkModulePath = System.getProperty("jdk.module.path");
+        String javafxModulePath = System.getProperty("javafx.module.path");
+        String commandLine = System.getProperty("sun.java.command", "");
+        
+        return jdkModulePath != null || javafxModulePath != null || 
+               commandLine.contains("--module-path") || 
+               commandLine.contains("--add-modules");
+    }
+    
+    /**
+     * 使用JavaFX模块路径重启进程
+     * 
+     * @param originalArgs 原始命令行参数
+     * @return 是否成功重启
+     */
+    private static boolean restartWithJavaFxModules(String[] originalArgs) {
+        try {
+            // 获取Java可执行文件路径
+            String javaHome = System.getProperty("java.home");
+            String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                javaBin += ".exe";
+            }
+            
+            // 查找JavaFX模块路径
+            String javaFxPath = null;
+            String[] potentialPaths = {
+                "target/dependency",
+                System.getProperty("user.home") + "/.m2/repository/org/openjfx",
+                "spelling-test/target/dependency",
+                "lib/javafx-modules",
+                "javafx-sdk/lib"
+            };
+            
+            for (String path : potentialPaths) {
+                File dir = new File(path);
+                if (dir.exists() && dir.isDirectory()) {
+                    // 检查是否包含JavaFX JAR
+                    File[] files = dir.listFiles((d, name) -> 
+                        name.endsWith(".jar") && (name.contains("javafx") || name.contains("openjfx"))
+                    );
+                    
+                    if (files != null && files.length > 0) {
+                        javaFxPath = dir.getAbsolutePath();
+                        System.out.println("找到JavaFX模块路径: " + javaFxPath);
+                        break;
+                    }
+                }
+            }
+            
+            // 找不到JavaFX模块路径，使用默认值
+            if (javaFxPath == null) {
+                javaFxPath = "target/dependency";
+                System.out.println("使用默认JavaFX模块路径: " + javaFxPath);
+                // 创建目录确保存在
+                new File(javaFxPath).mkdirs();
+            }
+            
+            // 构建命令行参数
+            List<String> command = new ArrayList<>();
+            command.add(javaBin);
+            
+            // 添加原始的JVM参数（如果有）
+            String jvmArgs = System.getProperty("sun.java.command", "");
+            if (jvmArgs.contains(" -")) {
+                String[] parts = jvmArgs.split(" -");
+                for (int i = 1; i < parts.length; i++) {
+                    command.add("-" + parts[i].trim());
+                }
+            }
+            
+            // 添加JavaFX模块参数
+            command.add("--module-path=" + javaFxPath);
+            command.add("--add-modules=javafx.controls,javafx.fxml,javafx.base,javafx.graphics");
+            
+            // 添加其他必要参数
+            command.add("--enable-preview");
+            command.add("-Dfile.encoding=UTF-8");
+            
+            // 添加开放模块参数
+            command.add("--add-opens=java.base/java.lang=ALL-UNNAMED");
+            command.add("--add-opens=java.base/java.io=ALL-UNNAMED");
+            command.add("--add-opens=java.base/java.util=ALL-UNNAMED");
+            command.add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED");
+            command.add("--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED");
+            
+            // 添加类路径
+            command.add("-cp");
+            command.add(System.getProperty("java.class.path"));
+            
+            // 添加主类
+            command.add(SpellCorrect.class.getName());
+            
+            // 添加原始参数
+            command.addAll(Arrays.asList(originalArgs));
+            
+            // 输出将要执行的命令（调试用）
+            System.out.println("正在使用JavaFX模块路径重启: " + String.join(" ", command));
+            
+            // 启动新进程
+            ProcessBuilder pb = new ProcessBuilder(command);
+            pb.inheritIO();
+            Process process = pb.start();
+            
+            // 等待进程启动
+            Thread.sleep(500);
+            
+            // 如果新进程已经开始，退出当前进程
+            System.exit(0);
+            return true;
+        } catch (IOException | InterruptedException e) {
+            System.err.println("重启进程失败: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
     }
 }
