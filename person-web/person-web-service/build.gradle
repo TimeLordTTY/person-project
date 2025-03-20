@@ -1,0 +1,49 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.6.3'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+group = 'com.person'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.aliyun.com/repository/public/' }
+    google()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    
+    runtimeOnly 'com.h2database:h2'
+    
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+bootJar {
+    archiveFileName = 'person-web-service.jar'
+}
+
+task createFolders {
+    doLast {
+        mkdir 'src/main/java/com/person/web/model'
+        mkdir 'src/main/java/com/person/web/dto'
+        mkdir 'src/main/java/com/person/web/repository'
+        mkdir 'src/main/java/com/person/web/service/impl'
+        mkdir 'src/main/java/com/person/web/controller'
+        mkdir 'src/main/java/com/person/web/config'
+        mkdir 'src/main/resources'
+    }
+} 

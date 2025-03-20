@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人资料API测试</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .profile-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .profile-info {
+            margin-bottom: 10px;
+        }
+        .profile-info span {
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .info-box {
+            background-color: #e8f4fd;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>个人资料API测试</h1>
+        
+        <div class="info-box">
+            <p><strong>注意：</strong> 如果直接从文件系统打开此页面，浏览器的同源策略可能会阻止API调用。请确保：</p>
+            <ol>
+                <li>后端服务正在运行（在命令行中执行：<code>java -jar target\person-web-service-0.0.1-SNAPSHOT.jar</code>）</li>
+                <li>使用具有代理服务器的方法来处理CORS问题，或者通过简单的HTTP服务器提供此HTML页面</li>
+            </ol>
+        </div>
+        
+        <div>
+            <button id="getProfile">获取用户资料</button>
+            <button id="refreshProfile">刷新用户资料</button>
+        </div>
+        
+        <div id="output">
+            <pre id="result">API响应将显示在这里...</pre>
+        </div>
+        
+        <div id="profileContainer" class="profile-container">
+            <h2>用户资料信息</h2>
+            <div class="profile-info"><span>Steam ID:</span> <span id="steamId"></span></div>
+            <div class="profile-info"><span>用户名:</span> <span id="steamUsername"></span></div>
+            <div class="profile-info"><span>状态:</span> <span id="status"></span></div>
+            <div class="profile-info"><span>真实姓名:</span> <span id="realName"></span></div>
+            <div class="profile-info"><span>国家:</span> <span id="country"></span></div>
+            <div class="profile-info"><span>个人简介:</span> <span id="summary"></span></div>
+            <div class="profile-info"><span>最后在线:</span> <span id="lastLogoff"></span></div>
+            <div class="profile-info"><span>更新时间:</span> <span id="updated"></span></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('getProfile').addEventListener('click', function() {
+            fetchProfile('get');
+        });
+        
+        document.getElementById('refreshProfile').addEventListener('click', function() {
+            fetchProfile('refresh');
+        });
+        
+        function fetchProfile(type) {
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = '正在请求数据...';
+            resultElement.className = '';
+            
+            const url = type === 'get' 
+                ? 'http://localhost:8080/api/profile' 
+                : 'http://localhost:8080/api/profile/refresh';
+            
+            const method = type === 'get' ? 'GET' : 'POST';
+            
+            // 使用CORS代理（适用于开发测试）
+            // 如果有CORS问题，可以尝试使用公共CORS代理
+            // const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors'  // 显式设置CORS模式
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('403 Forbidden - 这可能是CORS问题。请尝试：\n' +
+                            '1. 在后端配置中允许所有来源\n' +
+                            '2. 通过HTTP服务器（而不是文件系统）提供此页面\n' +
+                            '3. 确保后端服务正在运行');
+                    } else {
+                        throw new Error('请求失败，状态码: ' + response.status);
+                    }
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 显示完整响应
+                resultElement.textContent = JSON.stringify(data, null, 2);
+                
+                // 显示格式化的用户资料
+                document.getElementById('profileContainer').style.display = 'block';
+                document.getElementById('steamId').textContent = data.steamId || 'N/A';
+                document.getElementById('steamUsername').textContent = data.steamUsername || 'N/A';
+                document.getElementById('status').textContent = data.status || 'N/A';
+                document.getElementById('realName').textContent = data.realName || 'N/A';
+                document.getElementById('country').textContent = data.country || 'N/A';
+                document.getElementById('summary').textContent = data.summary || 'N/A';
+                document.getElementById('lastLogoff').textContent = data.lastLogoff ? new Date(data.lastLogoff).toLocaleString() : 'N/A';
+                document.getElementById('updated').textContent = data.updated ? new Date(data.updated).toLocaleString() : 'N/A';
+            })
+            .catch(error => {
+                resultElement.textContent = '错误: ' + error.message;
+                resultElement.className = 'error';
+            });
+        }
+    </script>
+</body>
+</html> 

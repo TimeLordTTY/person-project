@@ -18,6 +18,7 @@
     <name>person-project</name>
     <modules>
         <module>spelling-test</module>
+        <module>person-web-service</module>
     </modules>
     <properties>
         <project.version>1.0.0</project.version>
