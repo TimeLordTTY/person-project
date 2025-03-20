@@ -67,7 +67,7 @@ timeout /t 15 /nobreak > nul
 
 echo 3. 检查后端服务是否启动...
 ping 127.0.0.1 -n 1 > nul
-curl -s http://localhost:8080/api/health 2>nul
+curl -s http://localhost:8080/api/users >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo [警告] 无法确认后端服务是否正常启动
     echo 继续启动前端，但可能会出现连接问题
@@ -80,29 +80,39 @@ echo 4. 安装前端依赖...
 cd /d "%SCRIPT_DIR%person-web-ui"
 if not exist "node_modules" (
     echo 正在安装前端依赖 (这可能需要几分钟)...
-    call npm install
+    call npm install --legacy-peer-deps
     if %ERRORLEVEL% NEQ 0 (
         echo [错误] 安装前端依赖失败!
-        cd /d "%SCRIPT_DIR%"
-        echo 按任意键退出...
-        pause > nul
-        exit /b 1
+        echo 尝试使用--force参数安装...
+        call npm install --force
+        if %ERRORLEVEL% NEQ 0 (
+            cd /d "%SCRIPT_DIR%"
+            echo [错误] 安装前端依赖最终失败!
+            echo 按任意键退出...
+            pause > nul
+            exit /b 1
+        )
     )
 ) else (
     echo 前端依赖已安装
 )
-cd /d "%SCRIPT_DIR%"
 
-echo 5. 启动前端服务 (React)...
+echo 5. 启动前端服务 (React)并自动打开浏览器...
 start cmd /k "cd /d "%SCRIPT_DIR%person-web-ui" && npm start"
 
+echo 等待前端服务启动并打开浏览器...
+timeout /t 5 /nobreak > nul
+
+echo 6. 自动打开浏览器...
+start http://localhost:3000
+
 echo ================================
-echo 服务正在启动中...
+echo 服务已成功启动!
 echo - 后端服务: http://localhost:8080/api
 echo - 前端服务: http://localhost:3000
 echo ================================
-echo 提示: 前端服务可能需要等待几秒才能完全启动
-echo       如果浏览器没有自动打开, 请手动访问 http://localhost:3000
+echo 提示: 前端服务可能需要额外几秒才能完全启动
+echo       浏览器已自动打开，请等待页面加载完成
 echo ================================
 
 echo 按任意键退出脚本 (服务会继续在后台运行)...
