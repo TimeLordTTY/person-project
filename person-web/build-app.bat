@@ -31,21 +31,21 @@ if exist %MVN_PATH% (
 )
 
 echo 3. 检查POM文件位置...
-set "POM_PATH=%ROOT_DIR%person-web\person-web-service\pom.xml"
+set "POM_PATH=%ROOT_DIR%person-web-service\pom.xml"
 
 if exist "%POM_PATH%" (
     echo 找到POM文件: %POM_PATH%
 ) else (
     echo [警告] 未找到标准位置的POM文件，尝试其他位置...
     
-    if exist "%ROOT_DIR%\person-web-service\pom.xml" (
-        echo 在根目录下找到POM文件
-        set "POM_PATH=%ROOT_DIR%\person-web-service\pom.xml"
+    if exist "%ROOT_DIR%..\person-web-service\pom.xml" (
+        echo 在项目根目录下找到POM文件
+        set "POM_PATH=%ROOT_DIR%..\person-web-service\pom.xml"
     ) else (
         echo [错误] 未找到POM文件! 请检查项目结构
         echo 已检查的位置:
-        echo - %ROOT_DIR%person-web\person-web-service\pom.xml
-        echo - %ROOT_DIR%\person-web-service\pom.xml
+        echo - %ROOT_DIR%person-web-service\pom.xml
+        echo - %ROOT_DIR%..\person-web-service\pom.xml
         echo 按任意键退出...
         pause > nul
         exit /b 1
@@ -66,7 +66,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo 5. 验证构建结果...
-set "JAR_DIR=%ROOT_DIR%person-web\person-web-service\target"
+set "JAR_DIR=%ROOT_DIR%person-web-service\target"
 set "JAR_PATH=%JAR_DIR%\person-web-service-0.0.1-SNAPSHOT.jar"
 
 if exist "%JAR_PATH%" (
@@ -79,8 +79,8 @@ if exist "%JAR_PATH%" (
 ) else (
     echo [警告] 在标准位置未找到生成的JAR包，尝试查找其他位置...
     
-    if exist "%ROOT_DIR%person-web-service\target\person-web-service-0.0.1-SNAPSHOT.jar" (
-        echo 在非标准位置找到JAR包: %ROOT_DIR%person-web-service\target\person-web-service-0.0.1-SNAPSHOT.jar
+    if exist "%ROOT_DIR%..\person-web-service\target\person-web-service-0.0.1-SNAPSHOT.jar" (
+        echo 在非标准位置找到JAR包: %ROOT_DIR%..\person-web-service\target\person-web-service-0.0.1-SNAPSHOT.jar
     ) else (
         echo [错误] 无法找到生成的JAR包!
         echo 请检查Maven构建过程中的错误
@@ -91,4 +91,4 @@ if exist "%JAR_PATH%" (
 )
 
 echo 按任意键退出...
-pause > nul
+pause > nul 

@@ -1,10 +1,11 @@
 @echo off
 echo ================================
-echo 启动个人网站前后端应用
+echo 个人网站系统一键启动脚本
 echo ================================
 
 set "SCRIPT_DIR=%~dp0"
-echo 脚本目录: %SCRIPT_DIR%
+cd /d "%SCRIPT_DIR%"
+echo 当前目录: %CD%
 
 echo 0. 检查Java环境...
 java -version 2>nul
@@ -26,38 +27,28 @@ if exist "%JAR_PATH%" (
     echo 后端JAR包已找到: %JAR_PATH%
     set "JAR_FOUND=true"
 ) else (
-    echo [警告] 在相对路径未找到JAR包，尝试其他位置...
+    echo [警告] 后端JAR包不存在，需要先构建...
     
-    if exist "%SCRIPT_DIR%..\person-web-service\target\person-web-service-0.0.1-SNAPSHOT.jar" (
-        echo 在项目根目录下找到JAR包
-        set "JAR_PATH=%SCRIPT_DIR%..\person-web-service\target\person-web-service-0.0.1-SNAPSHOT.jar"
+    echo 2. 执行构建脚本...
+    call build-app.bat
+    
+    if %ERRORLEVEL% NEQ 0 (
+        echo [错误] 构建失败，请检查上述错误信息
+        pause > nul
+        exit /b 1
+    )
+    
+    if exist "%JAR_PATH%" (
+        echo 后端JAR包已成功构建
         set "JAR_FOUND=true"
     ) else (
-        echo [警告] 在当前位置未找到JAR包
-        echo 尝试 ..\person-web\person-web-service\target 相对于项目根目录...
-        
-        if exist "%SCRIPT_DIR%..\person-web\person-web-service\target\person-web-service-0.0.1-SNAPSHOT.jar" (
-            echo 在项目根目录相对路径中找到JAR包
-            set "JAR_PATH=%SCRIPT_DIR%..\person-web\person-web-service\target\person-web-service-0.0.1-SNAPSHOT.jar"
-            set "JAR_FOUND=true"
-        ) else (
-            echo [错误] 后端JAR包不存在!
-            echo 请先执行项目根目录下的build-app.bat构建后端服务
-            echo 按任意键退出...
-            pause > nul
-            exit /b 1
-        )
+        echo [错误] 构建后仍未找到JAR包，请检查项目配置
+        pause > nul
+        exit /b 1
     )
 )
 
-if "%JAR_FOUND%"=="false" (
-    echo [错误] 无法找到后端JAR包
-    echo 按任意键退出...
-    pause > nul
-    exit /b 1
-)
-
-echo 2. 启动后端服务 (SpringBoot)...
+echo 3. 启动后端服务 (SpringBoot)...
 echo 使用JAR包: %JAR_PATH%
 start cmd /k "echo 正在启动后端服务... && java -jar "%JAR_PATH%""
 
@@ -65,7 +56,7 @@ echo 等待后端服务启动...
 echo 这可能需要10-15秒，请耐心等待...
 timeout /t 15 /nobreak > nul
 
-echo 3. 检查后端服务是否启动...
+echo 4. 检查后端服务是否启动...
 ping 127.0.0.1 -n 1 > nul
 curl -s http://localhost:8080/api/users >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
@@ -76,34 +67,25 @@ if %ERRORLEVEL% NEQ 0 (
     echo 后端服务已成功启动
 )
 
-echo 4. 安装前端依赖...
+echo 5. 检查前端依赖...
 cd /d "%SCRIPT_DIR%person-web-ui"
 if not exist "node_modules" (
-    echo 正在安装前端依赖 (这可能需要几分钟)...
+    echo 前端依赖不存在，正在安装...
     call npm install --legacy-peer-deps
     if %ERRORLEVEL% NEQ 0 (
-        echo [错误] 安装前端依赖失败!
-        echo 尝试使用--force参数安装...
         call npm install --force
-        if %ERRORLEVEL% NEQ 0 (
-            cd /d "%SCRIPT_DIR%"
-            echo [错误] 安装前端依赖最终失败!
-            echo 按任意键退出...
-            pause > nul
-            exit /b 1
-        )
     )
 ) else (
     echo 前端依赖已安装
 )
 
-echo 5. 启动前端服务 (React)并自动打开浏览器...
+echo 6. 启动前端服务...
 start cmd /k "cd /d "%SCRIPT_DIR%person-web-ui" && npm start"
 
-echo 等待前端服务启动并打开浏览器...
+echo 等待前端服务启动...
 timeout /t 5 /nobreak > nul
 
-echo 6. 自动打开浏览器...
+echo 7. 打开浏览器...
 start http://localhost:3000
 
 echo ================================
@@ -111,7 +93,7 @@ echo 服务已成功启动!
 echo - 后端服务: http://localhost:8080/api
 echo - 前端服务: http://localhost:3000
 echo ================================
-echo 提示: 前端服务可能需要额外几秒才能完全启动
+echo 提示: 前端服务可能需要几秒才能完全启动
 echo       浏览器已自动打开，请等待页面加载完成
 echo ================================
 
