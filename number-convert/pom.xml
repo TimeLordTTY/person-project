@@ -13,14 +13,14 @@
         <maven.compiler.target>23</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>17.0.2</javafx.version>
+        <javafx.platform>win</javafx.platform>
         <main.class>com.example.Launcher</main.class>
-        <main.module>com.example.numberconverter</main.module>
         <app.name>MoneyConverter</app.name>
-        <app.display.name>??????</app.display.name>
+        <app.display.name>?????</app.display.name>
         <app.version>1.0.0</app.version>
     </properties>
 
-    <!-- 添� MAVEN中央仓库 -->
+    <!-- ??Maven???? -->
     <repositories>
         <repository>
             <id>central</id>
@@ -37,7 +37,7 @@
     </pluginRepositories>
 
     <dependencies>
-        <!-- JavaFX支持 -->
+        <!-- JavaFX?? -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -58,6 +58,31 @@
             <artifactId>javafx-base</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+        <!-- ?????JavaFX?? -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
     </dependencies>
 
     <build>
@@ -75,7 +100,7 @@
                 </configuration>
             </plugin>
             
-            <!-- 创建基本JAR -->
+            <!-- ????JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -96,7 +121,7 @@
                 </configuration>
             </plugin>
             
-            <!-- 复制依赖到lib目录 -->
+            <!-- ?????lib?? -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -118,23 +143,7 @@
                 </executions>
             </plugin>
             
-            <!-- JavaFX Maven Plugin -->
-            <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>
-                <configuration>
-                    <mainClass>${main.class}</mainClass>
-                    <launcher>launcher</launcher>
-                    <jlinkImageName>app</jlinkImageName>
-                    <jlinkZipName>app-zip</jlinkZipName>
-                    <noManPages>true</noManPages>
-                    <stripDebug>true</stripDebug>
-                    <noHeaderFiles>true</noHeaderFiles>
-                </configuration>
-            </plugin>
-            
-            <!-- 创建包含所有依赖的可执行JAR，包括JavaFX运行�?-->
+            <!-- ????????????JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -149,6 +158,17 @@
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>fat</shadedClassifierName>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>module-info.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>${main.class}</mainClass>
@@ -158,159 +178,53 @@
                     </execution>
                 </executions>
             </plugin>
+            
+            <!-- ??Launch4j??EXE?? -->
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.3.2</version>
+                <executions>
+                    <execution>
+                        <id>l4j-gui</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>${project.build.directory}/${app.name}.exe</outfile>
+                            <jar>${project.build.directory}/${project.artifactId}-${project.version}-fat.jar</jar>
+                            <dontWrapJar>false</dontWrapJar>
+                            <errTitle>${app.name}</errTitle>
+                            <classPath>
+                                <mainClass>${main.class}</mainClass>
+                            </classPath>
+                            <jre>
+                                <path>jre</path>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                                <bundledJreAsFallback>false</bundledJreAsFallback>
+                                <minVersion>1.8.0</minVersion>
+                                <runtimeBits>64</runtimeBits>
+                                <opts>
+                                    <opt>-Djava.library.path=./</opt>
+                                </opts>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>${app.version}</txtFileVersion>
+                                <fileDescription>?????</fileDescription>
+                                <copyright>Copyright � 2025</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>${app.version}</txtProductVersion>
+                                <productName>${app.display.name}</productName>
+                                <internalName>${app.name}</internalName>
+                                <originalFilename>${app.name}.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
-    
-    <profiles>
-        <!-- 使用Launch4j创建EXE文件 -->
-        <profile>
-            <id>exe</id>
-            <build>
-                <plugins>
-                    <!-- 使用 jlink 创建自定义运行时 -->
-                    <plugin>
-                        <groupId>org.moditect</groupId>
-                        <artifactId>moditect-maven-plugin</artifactId>
-                        <version>1.0.0.Final</version>
-                        <executions>
-                            <execution>
-                                <id>create-runtime-image</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>create-runtime-image</goal>
-                                </goals>
-                                <configuration>
-                                    <modulePath>
-                                        <path>${project.build.directory}/${project.build.finalName}.jar</path>
-                                        <path>${project.build.directory}/lib</path>
-                                    </modulePath>
-                                    <modules>
-                                        <module>java.base</module>
-                                        <module>java.desktop</module>
-                                        <module>javafx.controls</module>
-                                        <module>javafx.fxml</module>
-                                        <module>javafx.graphics</module>
-                                        <module>javafx.base</module>
-                                    </modules>
-                                    <launcher>
-                                        <name>${app.name}</name>
-                                        <module>${main.module}</module>
-                                    </launcher>
-                                    <outputDirectory>${project.build.directory}/jlink-image</outputDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    
-                    <plugin>
-                        <groupId>com.akathist.maven.plugins.launch4j</groupId>
-                        <artifactId>launch4j-maven-plugin</artifactId>
-                        <version>2.3.2</version>
-                        <executions>
-                            <execution>
-                                <id>l4j-gui</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>launch4j</goal>
-                                </goals>
-                                <configuration>
-                                    <headerType>gui</headerType>
-                                    <outfile>${project.build.directory}/${app.name}.exe</outfile>
-                                    <jar>${project.build.directory}/${app.name}-fat.jar</jar>
-                                    <dontWrapJar>false</dontWrapJar>
-                                    <errTitle>${app.name}</errTitle>
-                                    <classPath>
-                                        <mainClass>${main.class}</mainClass>
-                                        <addDependencies>true</addDependencies>
-                                        <jarLocation>lib/</jarLocation>
-                                    </classPath>
-                                    <jre>
-                                        <bundledJre64Bit>true</bundledJre64Bit>
-                                        <bundledJreAsFallback>false</bundledJreAsFallback>
-                                        <minVersion>17</minVersion>
-                                        <runtimeBits>64</runtimeBits>
-                                        <jdkPreference>jdkOnly</jdkPreference>
-                                        <path>jre</path>
-                                        <opts>
-                                            <opt>--module-path</opt>
-                                            <opt>lib</opt>
-                                            <opt>--add-modules</opt>
-                                            <opt>javafx.controls,javafx.fxml</opt>
-                                        </opts>
-                                    </jre>
-                                    <versionInfo>
-                                        <fileVersion>1.0.0.0</fileVersion>
-                                        <txtFileVersion>${app.version}</txtFileVersion>
-                                        <fileDescription>???????????</fileDescription>
-                                        <copyright>Copyright ? 2025</copyright>
-                                        <productVersion>1.0.0.0</productVersion>
-                                        <txtProductVersion>${app.version}</txtProductVersion>
-                                        <productName>${app.name}</productName>
-                                        <internalName>${app.name}</internalName>
-                                        <originalFilename>${app.name}.exe</originalFilename>
-                                    </versionInfo>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        
-        <!-- 使用jpackage创建自包含的应用程序 -->
-        <profile>
-            <id>jpackage</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-install-plugin</artifactId>
-                        <version>3.1.1</version>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.panteleyev</groupId>
-                        <artifactId>jpackage-maven-plugin</artifactId>
-                        <version>1.6.0</version>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>jpackage</goal>
-                                </goals>
-                                <configuration>
-                                    <name>${app.name}</name>
-                                    <appVersion>${app.version}</appVersion>
-                                    <vendor>Example</vendor>
-                                    <destination>${project.build.directory}/jpackage</destination>
-                                    <module>${main.module}/${main.class}</module>
-                                    <runtimeImage>${project.build.directory}/jlink-image</runtimeImage>
-                                    <modulePath>
-                                        <path>${project.build.directory}/${project.build.finalName}.jar</path>
-                                        <path>${project.build.directory}/lib</path>
-                                    </modulePath>
-                                    <input>${project.build.directory}</input>
-                                    <javaOptions>
-                                        <option>--add-modules</option>
-                                        <option>javafx.controls,javafx.fxml</option>
-                                    </javaOptions>
-                                    <winShortcut>true</winShortcut>
-                                    <winMenu>true</winMenu>
-                                    <winPerUserInstall>true</winPerUserInstall>
-                                    <type>app-image</type>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project> 

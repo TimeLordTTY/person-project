@@ -23,6 +23,14 @@ dependency-reduced-pom.xml
 **/.pnp.js
 **/coverage/
 
+# 分发打包相关
+dist/
+dist_*/
+*.zip
+*.exe
+*.jar
+portable/
+
 # IDE相关
 ### STS ###
 .apt_generated

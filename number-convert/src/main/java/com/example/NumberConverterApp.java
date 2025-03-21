@@ -4,8 +4,13 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -15,7 +20,7 @@ import javafx.stage.Stage;
 public class NumberConverterApp extends Application {
 
     private TextField inputField;
-    private Label resultLabel;
+    private TextField resultTextField;
     private Label digitalResultLabel;
 
     @Override
@@ -74,7 +79,7 @@ public class NumberConverterApp extends Application {
         );
         clearButton.setOnAction(e -> {
             inputField.clear();
-            resultLabel.setText("");
+            resultTextField.setText("");
             digitalResultLabel.setText("");
         });
 
@@ -100,12 +105,22 @@ public class NumberConverterApp extends Application {
         digitalResultLabel.setFont(Font.font("Microsoft YaHei", 14));
         digitalResultLabel.setWrapText(true);
         
-        resultLabel = new Label();
-        resultLabel.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 16));
-        resultLabel.setWrapText(true);
+        resultTextField = new TextField();
+        resultTextField.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 16));
+        resultTextField.setEditable(false);
+        resultTextField.setPrefWidth(450);
+        resultTextField.setStyle(
+            "-fx-text-fill: #4285f4; " +
+            "-fx-font-weight: bold; " +
+            "-fx-background-color: transparent; " + 
+            "-fx-padding: 0; " +
+            "-fx-border-width: 0; " +
+            "-fx-highlight-fill: #d9e8fb; " +
+            "-fx-highlight-text-fill: #4285f4;"
+        );
         
-        resultBox.getChildren().addAll(resultTitleLabel, digitalResultLabel, resultLabel);
-        resultBox.setVisible(false); // 初始时隐藏结果区域
+        resultBox.getChildren().addAll(resultTitleLabel, digitalResultLabel, resultTextField);
+        resultBox.setVisible(false);
 
         // 添加组件到布局
         inputGrid.add(inputLabel, 0, 0);
@@ -153,9 +168,17 @@ public class NumberConverterApp extends Application {
             digitalResultLabel.setTextFill(Color.BLACK);
             digitalResultLabel.setStyle("-fx-font-size: 14px;");
             
-            resultLabel.setText(String.format("大写金额：%s", chineseAmount));
-            resultLabel.setTextFill(Color.web("#4285f4"));
-            resultLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+            resultTextField.setText(String.format("大写金额：%s", chineseAmount));
+            resultTextField.setStyle(
+                "-fx-text-fill: #4285f4; " +
+                "-fx-font-size: 16px; " +
+                "-fx-font-weight: bold; " +
+                "-fx-background-color: transparent; " +
+                "-fx-padding: 0; " +
+                "-fx-border-width: 0; " +
+                "-fx-highlight-fill: #d9e8fb; " +
+                "-fx-highlight-text-fill: #4285f4;"
+            );
             
             resultBox.setVisible(true);
         } catch (Exception e) {
@@ -164,8 +187,15 @@ public class NumberConverterApp extends Application {
     }
 
     private void showError(String message) {
-        resultLabel.setText("错误：" + message);
-        resultLabel.setTextFill(Color.RED);
+        resultTextField.setText("错误：" + message);
+        resultTextField.setStyle(
+            "-fx-text-fill: red; " + 
+            "-fx-font-size: 16px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-background-color: transparent; " +
+            "-fx-padding: 0; " +
+            "-fx-border-width: 0;"
+        );
         digitalResultLabel.setText("");
     }
 
