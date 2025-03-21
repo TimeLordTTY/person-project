@@ -18,9 +18,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "react-app-rewired test",
+    "start": "set PORT=3000 && set HOST=0.0.0.0 && react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -41,5 +41,5 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://127.0.0.1:8080"
+  "proxy": "http://localhost:8080"
 }

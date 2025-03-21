@@ -1,9 +1,29 @@
+# Java相关
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+*.log
+.flattened-pom.xml
+dependency-reduced-pom.xml
 
+# 前端相关
+**/node_modules/
+**/dist/
+**/build/
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/.pnp
+**/.pnp.js
+**/coverage/
+
+# IDE相关
 ### STS ###
 .apt_generated
 .classpath
@@ -14,10 +34,14 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
+
+### VS Code ###
+.vscode/
+**/.history/
 
 ### NetBeans ###
 /nbproject/private/
@@ -29,11 +53,30 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# 操作系统相关
+.DS_Store
+Thumbs.db
+Desktop.ini
 
+# 临时文件
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
+*.orig
+
+# 日志文件
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-### Maven ###
-.flattened-pom.xml
-dependency-reduced-pom.xml
+# 其他
+.env
+.env.*
+!.env.example
+.cache/
+.temp/
+/person-web/person-web-ui/node_modules/
