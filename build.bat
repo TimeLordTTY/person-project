@@ -285,7 +285,8 @@ if not exist "spelling-test\target\SpellCheckTool.exe" (
     echo ) >> "%DIST_DIR%\拼写检查器\启动拼写检查器.bat"
     echo. >> "%DIST_DIR%\拼写检查器\启动拼写检查器.bat"
     echo start "" "拼写检查器.exe" >> "%DIST_DIR%\拼写检查器\启动拼写检查器.bat"
-    
+
+    rem 注意：拼写检查器确实需要这些配置文件，它们用于日志配置和API接口参数
     echo 复制配置文件...
     copy /Y "spelling-test\target\*.xml" "%DIST_DIR%\拼写检查器\"
     copy /Y "spelling-test\target\*.properties" "%DIST_DIR%\拼写检查器\"
@@ -312,17 +313,32 @@ if exist "doc-generator\src\main\resources\templates\project_status.xlsx" (
     del /f /q "doc-generator\src\main\resources\templates\project_status.xlsx"
 )
 
-echo 执行Word模板生成器...
+echo 复制项目依赖项...
+call %MVN_CMD% dependency:copy-dependencies -DoutputDirectory=target/dependency -pl :doc-generator
+
+echo 确保添加log4j-core依赖...
+call %MVN_CMD% dependency:get -DgroupId=org.apache.logging.log4j -DartifactId=log4j-core -Dversion=2.21.1 -Dtransitive=false
+call %MVN_CMD% dependency:copy -Dartifact=org.apache.logging.log4j:log4j-core:2.21.1 -DoutputDirectory=doc-generator/target/dependency
+
+echo 准备Java类路径...
+set "CLASSPATH=doc-generator\target\classes"
+for %%F in (doc-generator\target\dependency\*.jar) do call :append_classpath "%%F"
 cd /d "%PROJECT_ROOT%"
-call %MVN_CMD% exec:java -Dexec.mainClass="com.timelordtty.docgen.utils.DocxTemplateGenerator" -Dexec.args="--enable-preview" -pl :doc-generator
+
+echo 显示类路径内容...
+echo 当前类路径: %CLASSPATH%
+
+echo 执行Word模板生成器...
+echo 使用命令: java --enable-preview -cp "%CLASSPATH%" com.timelordtty.docgen.utils.DocxTemplateGenerator
+java --enable-preview -cp "%CLASSPATH%" com.timelordtty.docgen.utils.DocxTemplateGenerator
 if %ERRORLEVEL% NEQ 0 (
     echo 警告: Word模板生成失败，将创建占位符文件...
     echo "This is a placeholder for Word template file. Please generate a proper template." > "doc-generator\src\main\resources\templates\project_report.docx"
 )
 
 echo 执行Excel模板生成器...
-cd /d "%PROJECT_ROOT%"
-call %MVN_CMD% exec:java -Dexec.mainClass="com.timelordtty.docgen.utils.ExcelTemplateGenerator" -Dexec.args="--enable-preview" -pl :doc-generator
+echo 使用命令: java --enable-preview -cp "%CLASSPATH%" com.timelordtty.docgen.utils.ExcelTemplateGenerator
+java --enable-preview -cp "%CLASSPATH%" com.timelordtty.docgen.utils.ExcelTemplateGenerator
 if %ERRORLEVEL% NEQ 0 (
     echo 警告: Excel模板生成失败，将创建占位符文件...
     echo "This is a placeholder for Excel template file. Please generate a proper template." > "doc-generator\src\main\resources\templates\project_status.xlsx"
@@ -337,6 +353,14 @@ if not exist "doc-generator\src\main\resources\templates\project_status.xlsx" (
     echo 创建Excel模板占位符文件...
     echo "This is a placeholder for Excel template file. Please generate a proper template." > "doc-generator\src\main\resources\templates\project_status.xlsx"
 )
+
+goto :eof_template_section
+
+:append_classpath
+set CLASSPATH=%CLASSPATH%;%~1
+goto :eof
+
+:eof_template_section
 
 echo 检查EXE文件是否生成...
 if not exist "doc-generator\target\DocGeneratorTool.exe" (
@@ -364,7 +388,7 @@ if not exist "doc-generator\target\DocGeneratorTool.exe" (
     echo     exit /b 1 >> "%DIST_DIR%\文档生成器\启动文档生成器.bat"
     echo ) >> "%DIST_DIR%\文档生成器\启动文档生成器.bat"
     echo. >> "%DIST_DIR%\文档生成器\启动文档生成器.bat"
-    echo "%%JAVA_PATH%%" --module-path=..\jre\lib\javafx-modules --add-modules=javafx.controls,javafx.fxml,javafx.base,javafx.graphics -jar "%%JAR_PATH%%" >> "%DIST_DIR%\文档生成器\启动文档生成器.bat"
+    echo "%%JAVA_PATH%%" --enable-preview --module-path=..\jre\lib\javafx-modules --add-modules=javafx.controls,javafx.fxml,javafx.base,javafx.graphics -jar "%%JAR_PATH%%" >> "%DIST_DIR%\文档生成器\启动文档生成器.bat"
 ) else (
     echo 复制文档生成器EXE文件...
     copy /Y "doc-generator\target\DocGeneratorTool.exe" "%DIST_DIR%\文档生成器\文档生成器.exe"

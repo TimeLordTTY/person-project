@@ -131,29 +131,41 @@ public class DocGeneratorService {
      */
     private void processParagraphs(List<XWPFParagraph> paragraphs, Map<String, Object> dataMap) {
         for (XWPFParagraph paragraph : paragraphs) {
-            List<XWPFRun> runs = paragraph.getRuns();
-            
             String paragraphText = paragraph.getText();
-            if (paragraphText.contains(PLACEHOLDER_PREFIX)) {
+            
+            if (paragraphText != null && paragraphText.contains(PLACEHOLDER_PREFIX)) {
                 logger.debug("处理包含占位符的段落: {}", paragraphText);
                 
-                // 查找段落中的所有占位符
-                List<String> placeholders = JsonPlaceholderProcessor.findPlaceholders(paragraphText);
+                // 创建替换后的文本
+                String processedText = JsonPlaceholderProcessor.processPlaceholders(paragraphText, dataMap);
                 
-                for (String placeholder : placeholders) {
-                    String path = JsonPlaceholderProcessor.extractPath(placeholder);
-                    Object value = JsonPlaceholderProcessor.getValueByPath(dataMap, path);
-                    String replacement = value != null ? value.toString() : "";
+                if (!processedText.equals(paragraphText)) {
+                    logger.debug("替换后的文本: {}", processedText);
                     
-                    // 在段落的运行中查找并替换占位符
-                    for (int i = 0; i < runs.size(); i++) {
-                        XWPFRun run = runs.get(i);
-                        String text = run.getText(0);
-                        
-                        if (text != null && text.contains(placeholder)) {
-                            text = text.replace(placeholder, replacement);
-                            run.setText(text, 0);
+                    // 清除现有的runs
+                    int runsCount = paragraph.getRuns().size();
+                    for (int i = runsCount - 1; i >= 0; i--) {
+                        paragraph.removeRun(i);
+                    }
+                    
+                    // 添加新的run，包含替换后的文本
+                    XWPFRun newRun = paragraph.createRun();
+                    newRun.setText(processedText, 0);
+                    
+                    // 尝试保留原格式（加粗、斜体等）
+                    // 这里简化处理，实际使用可能需要更复杂的格式保留逻辑
+                    try {
+                        if (runsCount > 0 && paragraph.getRuns().get(0) != null) {
+                            XWPFRun originalRun = paragraph.getRuns().get(0);
+                            newRun.setBold(originalRun.isBold());
+                            newRun.setItalic(originalRun.isItalic());
+                            newRun.setFontFamily(originalRun.getFontFamily());
+                            if (originalRun.getFontSize() > 0) {
+                                newRun.setFontSize(originalRun.getFontSize());
+                            }
                         }
+                    } catch (Exception e) {
+                        logger.warn("复制格式时出错: {}", e.getMessage());
                     }
                 }
             }
@@ -242,68 +254,57 @@ public class DocGeneratorService {
 
     /**
      * 用于测试的主方法
+     * 
+     * @param args 命令行参数，"word"表示测试Word文档，"excel"表示测试Excel文档
      */
     public static void main(String[] args) {
+        boolean isWordTemplate = true;
+        
+        // 解析命令行参数
+        if (args.length > 0 && "excel".equalsIgnoreCase(args[0])) {
+            isWordTemplate = false;
+        }
+        
         try {
-            boolean isWordTemplate = true;
+            // 设置测试模板和数据文件路径
+            String templatePath = isWordTemplate 
+                ? "doc-generator/src/main/resources/templates/project_report.docx"
+                : "doc-generator/src/main/resources/templates/project_status.xlsx";
             
-            // 解析命令行参数
-            if (args.length > 0) {
-                if ("excel".equalsIgnoreCase(args[0])) {
-                    isWordTemplate = false;
-                    System.out.println("使用Excel模板进行测试");
-                } else {
-                    System.out.println("使用Word模板进行测试");
-                }
-            }
-            
-            // 测试参数
-            String templatePath;
-            String outputPath = "doc-generator/target/output";
+            String outputDir = "doc-generator/target/test-output";
             String dataFilePath = "doc-generator/src/main/resources/templates/sample_data.json";
             
-            if (isWordTemplate) {
-                templatePath = "doc-generator/src/main/resources/templates/project_report.docx";
-            } else {
-                templatePath = "doc-generator/src/main/resources/templates/project_status.xlsx";
+            // 创建输出目录（如果不存在）
+            File outputDirFile = new File(outputDir);
+            if (!outputDirFile.exists()) {
+                outputDirFile.mkdirs();
             }
             
-            // 确保输出目录存在
-            File outputDir = new File(outputPath);
-            if (!outputDir.exists()) {
-                outputDir.mkdirs();
-            }
-            
-            // 确保模板文件存在
+            // 检查文件是否存在
             File templateFile = new File(templatePath);
+            File dataFile = new File(dataFilePath);
+            
             if (!templateFile.exists()) {
-                System.err.println("模板文件不存在: " + templatePath);
+                System.err.println("错误: 模板文件不存在: " + templatePath);
                 return;
             }
             
-            // 确保数据文件存在
-            File dataFile = new File(dataFilePath);
             if (!dataFile.exists()) {
-                System.err.println("数据文件不存在: " + dataFilePath);
+                System.err.println("错误: 数据文件不存在: " + dataFilePath);
                 return;
             }
             
             System.out.println("测试参数:");
+            System.out.println("- 模板类型: " + (isWordTemplate ? "Word" : "Excel"));
             System.out.println("- 模板文件: " + templatePath);
             System.out.println("- 数据文件: " + dataFilePath);
-            System.out.println("- 输出目录: " + outputPath);
+            System.out.println("- 输出目录: " + outputDir);
             
-            // 创建服务实例并生成文档
+            // 创建服务实例并调用生成方法
             DocGeneratorService service = new DocGeneratorService();
-            String result = service.generateDocument(
-                templatePath, 
-                outputPath, 
-                dataFilePath, 
-                isWordTemplate
-            );
+            String outputPath = service.generateDocument(templatePath, outputDir, dataFilePath, isWordTemplate);
             
-            System.out.println("测试生成成功！文件路径：" + result);
-            
+            System.out.println("文档生成成功: " + outputPath);
         } catch (Exception e) {
             System.err.println("文档生成失败: " + e.getMessage());
             e.printStackTrace();
