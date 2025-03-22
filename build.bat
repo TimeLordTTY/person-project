@@ -469,23 +469,15 @@ echo   echo 无效选项，请重新运行并输入1-3的数字 >> "%DIST_DIR%\�
 echo   pause >> "%DIST_DIR%\启动.bat"
 echo ) >> "%DIST_DIR%\启动.bat"
 
-echo 更新使用指南...
-echo 个人应用程序集使用指南 > "%DIST_DIR%\使用指南.txt"
-echo =================== >> "%DIST_DIR%\使用指南.txt"
-echo. >> "%DIST_DIR%\使用指南.txt"
-echo 此程序包含三个应用程序，无需安装Java即可运行。 >> "%DIST_DIR%\使用指南.txt"
-echo. >> "%DIST_DIR%\使用指南.txt"
-echo 启动方法: >> "%DIST_DIR%\使用指南.txt"
-echo 1. 双击"启动.bat"批处理文件，然后选择要启动的应用程序。 >> "%DIST_DIR%\使用指南.txt"
-echo 2. 或者直接进入对应的应用程序目录，双击其中的EXE文件或启动批处理文件。 >> "%DIST_DIR%\使用指南.txt"
-echo. >> "%DIST_DIR%\使用指南.txt"
-echo 包含的应用程序: >> "%DIST_DIR%\使用指南.txt"
-echo - 货币转换器: 提供货币和数字转换功能 >> "%DIST_DIR%\使用指南.txt"
-echo - 拼写检查器: 提供文本拼写检查功能 >> "%DIST_DIR%\使用指南.txt"
-echo - 文档生成器: 提供基于Word和Excel模板生成文档功能 >> "%DIST_DIR%\使用指南.txt"
-echo. >> "%DIST_DIR%\使用指南.txt"
-echo 版本: 1.0.0 >> "%DIST_DIR%\使用指南.txt"
-echo 发布日期: %date% >> "%DIST_DIR%\使用指南.txt"
+rem 不再更新使用指南，保留用户自定义的详细说明
+rem 仅当使用指南文件不存在时创建简单的占位符文件
+if not exist "%DIST_DIR%\使用指南.txt" (
+  echo 创建使用指南占位符文件...
+  echo 个人应用程序集使用指南 > "%DIST_DIR%\使用指南.txt"
+  echo =================== >> "%DIST_DIR%\使用指南.txt"
+  echo. >> "%DIST_DIR%\使用指南.txt"
+  echo 请参考文档生成器详细说明。 >> "%DIST_DIR%\使用指南.txt"
+)
 
 echo ================================
 echo 构建完成!
