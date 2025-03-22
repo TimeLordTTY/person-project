@@ -90,16 +90,35 @@ yarn-error.log*
 /person-web/person-web-ui/node_modules/
 
 # 忽略PersonalApps目录下的所有内容，但保留.bat文件和说明文档
+PersonalApps/*
+!PersonalApps/*.bat
+!PersonalApps/*.txt
+
+# 忽略JRE目录 - 统一配置
+**/jre/
+PersonalApps/jre/
+PersonalApps/*/jre/
+**/target/jre/
 
 # 忽略以下PersonalApps子目录
-PersonalApps/jre/
 PersonalApps/lib/
 PersonalApps/货币转换器/*.jar
 PersonalApps/拼写检查器/*.jar
 
+# 保留特定目录
+!PersonalApps/货币转换器/
+!PersonalApps/拼写检查器/
+!PersonalApps/货币转换器/*.bat
+!PersonalApps/货币转换器/*.txt
+!PersonalApps/拼写检查器/*.bat
+!PersonalApps/拼写检查器/*.txt
+!PersonalApps/货币转换器/*.exe
+!PersonalApps/拼写检查器/*.exe
+
 # Maven生成目标
 target/
 */target/
+!*/target/*.exe
 
 # 编译生成的文件
 *.class

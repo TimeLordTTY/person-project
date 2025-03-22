@@ -48,19 +48,202 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
+            
+            <!-- Shade插件：创建包含所有依赖的JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>create-fat-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>${project.artifactId}-${project.version}-all</finalName>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.timelordtty.convert.Launcher</mainClass>
+                                    <manifestEntries>
+                                        <Add-Opens>java.base/java.lang java.base/java.io java.base/java.util</Add-Opens>
+                                        <Multi-Release>true</Multi-Release>
+                                        <Main-Class>com.timelordtty.convert.Launcher</Main-Class>
+                                        <Implementation-Title>${project.artifactId}</Implementation-Title>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
+                                        <Implementation-Vendor-Id>com.timelordtty</Implementation-Vendor-Id>
+                                        <Built-By>TimelordTTY</Built-By>
+                                    </manifestEntries>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.timelordtty.numberconvert.NumberConverter</mainClass>
+                    <mainClass>com.timelordtty.convert.MoneyConverterApp</mainClass>
                 </configuration>
             </plugin>
+            
+            <!-- 添加生成EXE插件 -->
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>com.timelordtty.numberconvert.NumberConverter</mainClass>
-                </configuration>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>l4j-clui</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>target/MoneyConverterTool.exe</outfile>
+                            <jar>target/${project.artifactId}-${project.version}-all.jar</jar>
+                            <dontWrapJar>false</dontWrapJar>
+                            <errTitle>货币转换工具错误</errTitle>
+                            <downloadUrl>https://java.com/download</downloadUrl>
+                            <supportUrl>https://github.com/timelordtty/number-convert</supportUrl>
+                            <stayAlive>false</stayAlive>
+                            <restartOnCrash>false</restartOnCrash>
+                            <processName>true</processName>
+                            <singleInstance>
+                                <mutexName>MoneyConverterToolMutex</mutexName>
+                                <windowTitle>货币转换工具</windowTitle>
+                            </singleInstance>
+                            <classPath>
+                                <mainClass>com.timelordtty.convert.Launcher</mainClass>
+                                <addDependencies>false</addDependencies>
+                            </classPath>
+                            <jre>
+                                <path>../jre</path>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                                <bundledJreAsFallback>false</bundledJreAsFallback>
+                                <minVersion>23</minVersion>
+                                <jdkPreference>preferJre</jdkPreference>
+                                <runtimeBits>64</runtimeBits>
+                                <initialHeapSize>128</initialHeapSize>
+                                <maxHeapSize>512</maxHeapSize>
+                                <opts>
+                                    <opt>-Djava.library.path=./</opt>
+                                    <opt>-Dfile.encoding=UTF-8</opt>
+                                    <opt>--module-path=../jre/lib/javafx-modules</opt>
+                                    <opt>--add-modules=javafx.controls,javafx.fxml,javafx.base,javafx.graphics</opt>
+                                    <opt>--add-opens=java.base/java.lang=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.base/java.io=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.base/java.util=ALL-UNNAMED</opt>
+                                </opts>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>1.0.0.0</txtFileVersion>
+                                <fileDescription>货币转换工具</fileDescription>
+                                <copyright>Copyright © 2023 TimelordTTY</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>1.0.0.0</txtProductVersion>
+                                <productName>货币转换工具</productName>
+                                <internalName>MoneyConverterTool</internalName>
+                                <originalFilename>MoneyConverterTool.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- 复制JavaFX依赖 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/dependency</outputDirectory>
+                            <includeArtifactIds>javafx-controls,javafx-base,javafx-graphics,javafx-fxml</includeArtifactIds>
+                            <includeClassifiers>win</includeClassifiers>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- 复制JRE -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <!-- 删除之前的jre目录（如果存在） -->
+                                <delete dir="${project.build.directory}/jre" quiet="true" failonerror="false"/>
+                                
+                                <!-- 复制完整JRE -->
+                                <echo>复制完整JRE�?..</echo>
+                                <copy todir="${project.build.directory}/jre">
+                                    <fileset dir="D:\Soft\Java\jdk-23">
+                                        <include name="bin/**"/>
+                                        <include name="conf/**"/>
+                                        <include name="lib/**"/>
+                                        <include name="legal/**"/>
+                                        <include name="release"/>
+                                    </fileset>
+                                </copy>
+                                
+                                <!-- 创建JavaFX模块目录 -->
+                                <mkdir dir="${project.build.directory}/jre/lib/javafx-modules"/>
+                                
+                                <!-- 复制JavaFX模块 -->
+                                <echo>复制JavaFX模块...</echo>
+                                <copy todir="${project.build.directory}/jre/lib/javafx-modules" flatten="true" failonerror="false">
+                                    <fileset dir="${project.build.directory}/dependency">
+                                        <include name="**/javafx*.jar"/>
+                                    </fileset>
+                                </copy>
+                                
+                                <!-- 清理多余的JAR�?-->
+                                <echo>清理多余文件...</echo>
+                                <delete>
+                                    <fileset dir="${project.build.directory}">
+                                        <include name="*.jar"/>
+                                        <exclude name="${project.artifactId}-${project.version}-all.jar"/>
+                                    </fileset>
+                                </delete>
+                                
+                                <!-- 完成提示 -->
+                                <echo>JRE已复制到target/jre目录</echo>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

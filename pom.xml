@@ -27,7 +27,7 @@
         <java.version>23</java.version>
         <maven.compiler.source>23</maven.compiler.source>
         <jdk.home>D:\Soft\Java\jdk-23</jdk.home>
-        <spring-boot.version>3.2.3</spring-boot.version>
+        <spring-boot.version>2.7.18</spring-boot.version>
         <spring-cloud.version>2023.0.0</spring-cloud.version>
         <javafx.version>21.0.1</javafx.version>
         <okhttp.version>4.9.3</okhttp.version>
@@ -273,7 +273,7 @@
                             <skip>true</skip>
                             <rules>
                                 <requireJavaVersion>
-                                    <message>*** 当前JDK版本为 ${java.version} - 需要使用JDK 17及以上版本! ***</message>
+                                    <message>*** 褰撳墠JDK鐗堟湰涓?${java.version} - 闇€瑕佷娇鐢↗DK 17鍙婁互涓婄増鏈? ***</message>
                                     <version>[17,]</version>
                                 </requireJavaVersion>
                             </rules>
