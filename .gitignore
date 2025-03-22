@@ -88,3 +88,39 @@ yarn-error.log*
 .cache/
 .temp/
 /person-web/person-web-ui/node_modules/
+
+# 忽略PersonalApps目录下的所有内容，但保留.bat文件和说明文档
+
+# 忽略以下PersonalApps子目录
+PersonalApps/jre/
+PersonalApps/lib/
+PersonalApps/货币转换器/*.jar
+PersonalApps/拼写检查器/*.jar
+
+# Maven生成目标
+target/
+*/target/
+
+# 编译生成的文件
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# 日志文件
+*.log
+
+# IDE文件
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
