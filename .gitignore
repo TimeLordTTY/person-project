@@ -112,8 +112,6 @@ PersonalApps/拼写检查器/*.exe
 !PersonalApps/货币转换器/*.txt
 !PersonalApps/拼写检查器/*.bat
 !PersonalApps/拼写检查器/*.txt
-!PersonalApps/货币转换器/*.exe
-!PersonalApps/拼写检查器/*.exe
 
 # Maven生成目标
 target/
