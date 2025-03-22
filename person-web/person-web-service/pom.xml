@@ -11,9 +11,9 @@
     </parent>
     
     <artifactId>person-web-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>person-web-service</name>
-    <description>个人网站后端服务</description>
+    <description>个人���端��</description>
     
     <dependencies>
         <dependency>
