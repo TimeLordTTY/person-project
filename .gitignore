@@ -102,8 +102,8 @@ PersonalApps/*/jre/
 
 # 忽略以下PersonalApps子目录
 PersonalApps/lib/
-PersonalApps/货币转换器/*.jar
-PersonalApps/拼写检查器/*.jar
+PersonalApps/货币转换器/*.exe
+PersonalApps/拼写检查器/*.exe
 
 # 保留特定目录
 !PersonalApps/货币转换器/
