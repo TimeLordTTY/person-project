@@ -141,3 +141,5 @@ target/
 # 操作系统文件
 .DS_Store
 Thumbs.db
+doc-generator/src/main/resources/templates/project_report.docx
+doc-generator/src/main/resources/templates/project_status.xlsx

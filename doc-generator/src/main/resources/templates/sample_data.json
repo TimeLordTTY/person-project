@@ -1,0 +1,96 @@
+{
+  "reportInfo": {
+    "title": "项目进度报告",
+    "author": "张三",
+    "department": "研发部",
+    "date": "2024-07-15",
+    "reportId": "RPT-2024-001"
+  },
+  "projectInfo": {
+    "name": "文档自动化生成系统",
+    "manager": "李四",
+    "startDate": "2024-01-10",
+    "endDate": "2024-12-31",
+    "status": "进行中"
+  },
+  "milestones": [
+    {
+      "name": "需求分析",
+      "startDate": "2024-01-10",
+      "endDate": "2024-02-28",
+      "status": "已完成",
+      "completion": 100
+    },
+    {
+      "name": "系统设计",
+      "startDate": "2024-03-01",
+      "endDate": "2024-04-30",
+      "status": "已完成",
+      "completion": 100
+    },
+    {
+      "name": "开发实现",
+      "startDate": "2024-05-01",
+      "endDate": "2024-08-31",
+      "status": "进行中",
+      "completion": 65
+    },
+    {
+      "name": "测试验收",
+      "startDate": "2024-09-01",
+      "endDate": "2024-11-30",
+      "status": "未开始",
+      "completion": 0
+    },
+    {
+      "name": "系统上线",
+      "startDate": "2024-12-01",
+      "endDate": "2024-12-31",
+      "status": "未开始",
+      "completion": 0
+    }
+  ],
+  "resources": [
+    {
+      "name": "张三",
+      "role": "项目经理",
+      "allocation": 50
+    },
+    {
+      "name": "李四",
+      "role": "架构师",
+      "allocation": 80
+    },
+    {
+      "name": "王五",
+      "role": "开发工程师",
+      "allocation": 100
+    },
+    {
+      "name": "赵六",
+      "role": "测试工程师",
+      "allocation": 70
+    }
+  ],
+  "risks": [
+    {
+      "description": "技术难点突破延期",
+      "impact": "高",
+      "probability": "中",
+      "mitigationPlan": "增加技术预研时间，引入外部专家"
+    },
+    {
+      "description": "需求变更频繁",
+      "impact": "中",
+      "probability": "高",
+      "mitigationPlan": "加强需求管理流程，控制变更范围"
+    }
+  ],
+  "summary": {
+    "progressPercent": 53,
+    "budgetUsedPercent": 48,
+    "keyAchievements": "完成了系统核心模块的设计和实现，基本功能已可演示",
+    "challenges": "遇到了数据处理性能瓶颈，正在优化算法和数据结构",
+    "nextSteps": "完成剩余模块开发，准备进入集成测试阶段"
+  }
+} 

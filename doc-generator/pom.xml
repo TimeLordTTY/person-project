@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.timelordtty</groupId>
+        <artifactId>person-project</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>doc-generator</artifactId>
+    <version>1.0.0</version>
+    <name>doc-generator</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>23</java.version>
+        <maven.compiler.source>23</maven.compiler.source>
+        <maven.compiler.target>23</maven.compiler.target>
+        <jdk.home>D:\Soft\Java\jdk-23</jdk.home>
+        <apache.poi.version>5.2.5</apache.poi.version>
+    </properties>
+
+    <dependencies>
+        <!-- JavaFX依赖 -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+        </dependency>
+        
+        <!-- 平台特定的JavaFX依赖 -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <classifier>win</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <classifier>win</classifier>
+        </dependency>
+        
+        <!-- Apache POI - Word文档处理 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${apache.poi.version}</version>
+        </dependency>
+        
+        <!-- Apache POI - Excel文档处理 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${apache.poi.version}</version>
+        </dependency>
+        
+        <!-- 日志依赖 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        
+        <!-- Jackson依赖 - 用于JSON处理 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            
+            <!-- JavaFX Maven 插件 -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.timelordtty.docgen.DocGeneratorApp</mainClass>
+                </configuration>
+            </plugin>
+            
+            <!-- Shade插件，确保所有依赖都打包到单个JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>create-fat-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>${project.artifactId}-${project.version}-all</finalName>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.timelordtty.docgen.DocGeneratorApp</mainClass>
+                                    <manifestEntries>
+                                        <Add-Opens>java.base/java.lang java.base/java.io java.base/java.util</Add-Opens>
+                                        <Multi-Release>true</Multi-Release>
+                                        <Main-Class>com.timelordtty.docgen.DocGeneratorApp</Main-Class>
+                                        <Implementation-Title>${project.artifactId}</Implementation-Title>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
+                                        <Implementation-Vendor-Id>com.timelordtty</Implementation-Vendor-Id>
+                                        <Built-By>TimelordTTY</Built-By>
+                                    </manifestEntries>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- 生成EXE -->
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>l4j-clui</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>target/DocGeneratorTool.exe</outfile>
+                            <jar>target/${project.artifactId}-${project.version}-all.jar</jar>
+                            <dontWrapJar>false</dontWrapJar>
+                            <errTitle>文档生成器错误</errTitle>
+                            <downloadUrl>https://java.com/download</downloadUrl>
+                            <supportUrl>https://github.com/timelordtty/doc-generator</supportUrl>
+                            <stayAlive>false</stayAlive>
+                            <restartOnCrash>false</restartOnCrash>
+                            <processName>true</processName>
+                            <singleInstance>
+                                <mutexName>DocGeneratorToolMutex</mutexName>
+                                <windowTitle>文档生成器</windowTitle>
+                            </singleInstance>
+                            <classPath>
+                                <mainClass>com.timelordtty.docgen.DocGeneratorApp</mainClass>
+                                <addDependencies>false</addDependencies>
+                            </classPath>
+                            <jre>
+                                <path>../jre</path>
+                                <bundledJre64Bit>true</bundledJre64Bit>
+                                <bundledJreAsFallback>false</bundledJreAsFallback>
+                                <minVersion>23</minVersion>
+                                <jdkPreference>preferJre</jdkPreference>
+                                <runtimeBits>64</runtimeBits>
+                                <initialHeapSize>128</initialHeapSize>
+                                <maxHeapSize>512</maxHeapSize>
+                                <opts>
+                                    <opt>-Djava.library.path=./</opt>
+                                    <opt>-Dfile.encoding=UTF-8</opt>
+                                    <opt>--module-path=../jre/lib/javafx-modules</opt>
+                                    <opt>--add-modules=javafx.controls,javafx.fxml,javafx.base,javafx.graphics</opt>
+                                    <opt>--add-opens=java.base/java.lang=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.base/java.io=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.base/java.util=ALL-UNNAMED</opt>
+                                </opts>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>${project.version}</txtFileVersion>
+                                <fileDescription>文档生成器工具</fileDescription>
+                                <copyright>Copyright © 2024 TimelordTTY</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>${project.version}</txtProductVersion>
+                                <productName>文档生成器</productName>
+                                <internalName>DocGeneratorTool</internalName>
+                                <originalFilename>DocGeneratorTool.exe</originalFilename>
+                            </versionInfo>
+                            <messages>
+                                <startupErr>启动过程中出错</startupErr>
+                                <bundledJreErr>找不到捆绑的JRE</bundledJreErr>
+                                <jreVersionErr>需要Java运行环境</jreVersionErr>
+                                <launcherErr>启动器初始化失败</launcherErr>
+                                <instanceAlreadyExistsMsg>程序已经在运行中</instanceAlreadyExistsMsg>
+                            </messages>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- 复制JavaFX依赖 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/dependency</outputDirectory>
+                            <includeArtifactIds>javafx-controls,javafx-base,javafx-graphics,javafx-fxml</includeArtifactIds>
+                            <includeClassifiers>win</includeClassifiers>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeScope>runtime</includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- 复制JRE -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <!-- 删除之前的jre目录（如果存在） -->
+                                <delete dir="${project.build.directory}/jre" quiet="true" failonerror="false"/>
+                                
+                                <!-- 复制完整JRE -->
+                                <echo>复制完整JRE...</echo>
+                                <copy todir="${project.build.directory}/jre">
+                                    <fileset dir="D:\Soft\Java\jdk-23">
+                                        <include name="bin/**"/>
+                                        <include name="conf/**"/>
+                                        <include name="lib/**"/>
+                                        <include name="legal/**"/>
+                                        <include name="release"/>
+                                    </fileset>
+                                </copy>
+                                
+                                <!-- 创建JavaFX模块目录 -->
+                                <mkdir dir="${project.build.directory}/jre/lib/javafx-modules"/>
+                                
+                                <!-- 复制JavaFX模块 -->
+                                <echo>复制JavaFX模块...</echo>
+                                <copy todir="${project.build.directory}/jre/lib/javafx-modules" flatten="true" failonerror="false">
+                                    <fileset dir="${project.build.directory}/dependency">
+                                        <include name="**/javafx*.jar"/>
+                                    </fileset>
+                                </copy>
+                                
+                                <!-- 清理多余的JAR文件 -->
+                                <echo>清理多余文件...</echo>
+                                <delete>
+                                    <fileset dir="${project.build.directory}">
+                                        <include name="*.jar"/>
+                                        <exclude name="${project.artifactId}-${project.version}-all.jar"/>
+                                    </fileset>
+                                </delete>
+                                
+                                <!-- 复制模板文件到target目录 -->
+                                <echo>复制模板文件...</echo>
+                                <copy todir="${project.build.directory}/templates">
+                                    <fileset dir="${project.basedir}/src/main/resources/templates">
+                                        <include name="**/*"/>
+                                    </fileset>
+                                </copy>
+                                
+                                <!-- 完成提示 -->
+                                <echo>构建完成</echo>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- Maven Exec Plugin -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>com.timelordtty.docgen.DocGeneratorApp</mainClass>
+                    <arguments>
+                        <argument>--enable-preview</argument>
+                    </arguments>
+                    <classpathScope>runtime</classpathScope>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${project.build.directory}/classes</additionalClasspathElement>
+                    </additionalClasspathElements>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project> 

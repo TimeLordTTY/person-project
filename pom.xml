@@ -20,6 +20,7 @@
         <module>spelling-test</module>
         <module>person-web/person-web-service</module>
         <module>number-convert</module>
+        <module>doc-generator</module>
     </modules>
     <properties>
         <project.version>1.0.0</project.version>
