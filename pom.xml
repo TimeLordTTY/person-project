@@ -51,9 +51,9 @@
     <properties>
         <project.version>1.0.0</project.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>23</java.version>
-        <maven.compiler.source>23</maven.compiler.source>
-        <jdk.home>D:\Soft\Java\jdk-23</jdk.home>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <jdk.home>D:\Soft\Java\jdk-17</jdk.home>
         <spring-boot.version>2.7.18</spring-boot.version>
         <spring-cloud.version>2023.0.0</spring-cloud.version>
         <javafx.version>21.0.1</javafx.version>

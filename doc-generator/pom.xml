@@ -17,10 +17,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>23</java.version>
-        <maven.compiler.source>23</maven.compiler.source>
-        <maven.compiler.target>23</maven.compiler.target>
-        <jdk.home>D:\Soft\Java\jdk-23</jdk.home>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <jdk.home>D:\Soft\Java\jdk-17</jdk.home>
         <apache.poi.version>5.2.5</apache.poi.version>
     </properties>
 
@@ -194,7 +194,7 @@
                                 <path>../jre</path>
                                 <bundledJre64Bit>true</bundledJre64Bit>
                                 <bundledJreAsFallback>false</bundledJreAsFallback>
-                                <minVersion>23</minVersion>
+                                <minVersion>17</minVersion>
                                 <jdkPreference>preferJre</jdkPreference>
                                 <runtimeBits>64</runtimeBits>
                                 <initialHeapSize>128</initialHeapSize>
@@ -275,7 +275,7 @@
                                 <!-- 复制完整JRE -->
                                 <echo>复制完整JRE...</echo>
                                 <copy todir="${project.build.directory}/jre">
-                                    <fileset dir="D:\Soft\Java\jdk-23">
+                                    <fileset dir="D:\Soft\Java\jdk-17">
                                         <include name="bin/**"/>
                                         <include name="conf/**"/>
                                         <include name="lib/**"/>

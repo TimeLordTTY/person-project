@@ -4,10 +4,10 @@ echo 个人项目全局构建脚本
 echo ================================
 
 echo 设置环境变量...
-set JAVA_HOME=D:\Soft\Java\jdk-23
+set JAVA_HOME=D:\Soft\Java\jdk-17
 set PATH=%JAVA_HOME%\bin;%PATH%
 set MAVEN_OPTS=-Xmx1024m -Dfile.encoding=UTF-8
-set MVN_CMD=E:\Apache\apache-maven-3.9.9\bin\mvn
+set MVN_CMD=D:\Soft\Maven\apache-maven-3.9.9\bin\mvn
 set PROJECT_ROOT=%~dp0
 
 echo 当前使用的Java版本:
@@ -157,7 +157,7 @@ mkdir "%DIST_DIR%\jre\lib\javafx-modules" 2>nul
 
 echo 复制JavaFX库文件...
 set "JAVAFX_VERSION=21.0.1"
-set "JAVAFX_DIR=E:\Apache\apache-maven-3.9.9\Repository\org\openjfx"
+set "JAVAFX_DIR=D:\Soft\Maven\apache-maven-3.9.9\Repository\org\openjfx"
 
 if exist "%JAVAFX_DIR%" (
     copy /Y "%JAVAFX_DIR%\javafx-graphics\%JAVAFX_VERSION%\javafx-graphics-%JAVAFX_VERSION%.jar" "%DIST_DIR%\jre\lib\javafx-modules\"
